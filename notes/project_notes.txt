@@ -1,0 +1,10 @@
+md5 = "2ab8159a2074827dee7c048eb56f1aa1"
+
+first char = 2
+last char = 1
+
+project pcpc = Word Count
+Amazon EC2 instance = t2.2xlarge
+
+mpirun --allow-run-as-root -np 8 a.out testo.txt testo.txt testo.txt testo.txt testo.txt prova.txt prova.txt prova.txt prova.txt prova.txt testo.txt
+comando di sopra è presente un bug
