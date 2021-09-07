@@ -1,6 +1,12 @@
 #include "../headers/word_counter.h"
 
-dict_p word_counting(int argc, char* argv[]){
+dict_p word_counting(int argc, char* argv[])
+{
+    if(argc < 2){
+        printf("Please pass atleast one text file...\n");
+        exit(-1);
+    }
+
     int rank, num_proc;
     long total_size = 0;
     long* file_list_size = calloc(argc - 1, sizeof(long));
@@ -249,8 +255,8 @@ dict_p word_counting(int argc, char* argv[]){
             
         global_dict = merge_dict(global_dict);
 
-        MPI_Finalize();
-        return global_dict;
+        //MPI_Finalize();
+        //return global_dict;
     } 
     //Slaves
     else {
@@ -276,6 +282,23 @@ dict_p word_counting(int argc, char* argv[]){
                 NULL, NULL, NULL, 0, MPI_COMM_WORLD);
     }
 
+    //MPI_Finalize();
+    //exit(0);
+
+    MPI_Type_free(&mpi_data_infos);
+    MPI_Type_free(&mpi_dict_entry_struct);
+    MPI_Type_free(&mpi_dict_entry_struct_tmp);
+    MPI_Type_free(&mpi_data_file_indexes);
     MPI_Finalize();
+    //free all the memory used to generate the global_dict
+    free(proc_dict);
+    free(file_list_size);
+    free(global_buffer_dicts_entries);
+    free(global_buffer_dicts_sizes);
+    free(proc_data.files);
+
+    if(rank == 0)
+        return global_dict;
+
     exit(0);
 }

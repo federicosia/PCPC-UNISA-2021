@@ -10,8 +10,8 @@ int main(int argc, char* argv[])
     dict_p dict = word_counting(argc, argv);
     end = clock();
 
-    time_used = ((double) (end - start)) / (CLOCKS_PER_SEC / 1000);
+    time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
     print_csv(dict);
-    printf("Time elapsed: %.0f ms\n", time_used);
+    printf("Time elapsed: %.2f sec(s)\n", time_used);
 }
