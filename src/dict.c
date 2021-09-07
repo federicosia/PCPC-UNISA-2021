@@ -113,17 +113,16 @@ void mergeSort(dict_entry *entries, int x, int z){
 // - dict_p global_dict: contains all dicts of the processes
 // - int size: number of dictionaries gave in input
 dict_p merge_dict(dict_p global_dict){
-    int size = global_dict->num_entries;
     dict_p result = dict_create();
 
     //sort
-    //qsort(global_dict->entry, size, sizeof(dict_entry), dict_entry_name_comparator);
-    mergeSort(global_dict->entry, 0, global_dict->num_entries - 1);
+    qsort(global_dict->entry, global_dict->num_entries, sizeof(dict_entry), dict_entry_name_comparator);
+    //mergeSort(global_dict->entry, 0, global_dict->num_entries - 1);
 
     //merge
     char name_entry[50] = "";
     int j = -1;
-    for(int i = 0; i < size; i++){
+    for(int i = 0; i < global_dict->num_entries; i++){
         if(strcmp(name_entry, global_dict->entry[i].name) != 0){
             j++;
             dict_add(result, global_dict->entry[i].name);
@@ -134,6 +133,7 @@ dict_p merge_dict(dict_p global_dict){
             result->entry[j].occurrences += global_dict->entry[i].occurrences;
         }
     }
+    
     free(global_dict->entry);
     free(global_dict);
     return result;

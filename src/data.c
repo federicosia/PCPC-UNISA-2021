@@ -57,12 +57,12 @@ void word_counter(DATA data, dict_p dict, char* argv[]){//, int file_counter){
                     
                     dict_add(dict, word);
                     ch_count = 0;
-                    free(word);
-                    word = malloc(50);
+                    word[0] = '\0';
                 }
             }
             if(byte_read > ending_byte) break;
         }
+        free(word);
         fclose(file);
         free(path);
     }
