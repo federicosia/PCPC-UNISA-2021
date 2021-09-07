@@ -1,1 +1,4 @@
-ec2-54-205-32-183.compute-1.amazonaws.com
+52.91.78.181 slots=8 max-slots=8
+52.90.43.20 slots=8 max-slots=8
+3.87.4.127 slots=8 max-slots=8
+18.206.164.241 slots=8 max-slots=8
