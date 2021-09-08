@@ -1,28 +1,28 @@
 #include "../headers/data.h"
 
-//init DATA struct; size, start and end are initiliazed to 0 and file_indexes 
+//init files_info struct; size, start and end are initiliazed to 0 and file_indexes 
 //is going to hold "files" indexes.
-// - init files: how many files DATA should hold
-DATA data_init(int files){
-    DATA data = {0, 0, 0, 0, calloc(files, sizeof(int))};
+// - init files: how many files files_info should hold
+files_info data_init(int files){
+    files_info data = {0, 0, 0, 0, calloc(files, sizeof(int))};
 
     return data;
 }
 
 //finds the words in the texts and populate the dictionary increasing the word counter if already present
 //or adding a new word if not present in the dictonary
-// - DATA data: all the infos needed by the processes to analyze the files
+// - files_info data: all the infos needed by the processes to analyze the files
 // - dict_p dict: dictionary that keeps all the words found in the files
 // - char* argv[]: list of pointers to files 
 // - int file_counter: files to analyze
-void word_counter(DATA data, dict_p dict, char* argv[]){//, int file_counter){
+void word_counter(files_info data, dict_p dict, char* argv[]){//, int file_counter){
     //If size is 0 just return 
     if(data.size == 0) return;
     
     for(int i = 0; i < data.num_files; i++){
         int argv_index = data.files[i].index;
         int ch = 0, ch_count = 0;
-        char *word = malloc(50);
+        char *word = malloc(STRLEN);
         int file_size = 0, byte_read, starting_byte = data.start, ending_byte = data.end;
         char *path = filepath(argv[argv_index]);
 
@@ -44,6 +44,10 @@ void word_counter(DATA data, dict_p dict, char* argv[]){//, int file_counter){
             ch = fgetc(file);
             byte_read++;
             if(!is_word_terminator(ch)){
+                if(ch_count + 1 > STRLEN){
+                    printf("Found word too long in %s, are you sure it's not an error?", argv[argv_index]);
+                    exit(-1);
+                }
                 word[ch_count] = ch;
                 ch_count++;
             } else {
@@ -68,7 +72,7 @@ void word_counter(DATA data, dict_p dict, char* argv[]){//, int file_counter){
     }
 }
 
-char* data_print(DATA data){
+char* data_print(files_info data){
     printf("\tStart: %d\n\tend: %d\n\tsize: %d\n\t", data.start, data.end, data.size);
     printf("file indexes: ");
     for(int j = 0; j < data.num_files; j++){

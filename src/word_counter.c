@@ -2,12 +2,21 @@
 
 dict_p word_counting(int argc, char* argv[])
 {
+    double start, result;
+    int rank, num_proc;
+    
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
+
     if(argc < 2){
         printf("Please pass atleast one text file...\n");
+        MPI_Abort(MPI_COMM_WORLD, -1);
         exit(-1);
     }
 
-    int rank, num_proc;
+    start = MPI_Wtime();
+
     long total_size = 0;
     long* file_list_size = calloc(argc - 1, sizeof(long));
     //dict used to merge all dicts
@@ -15,29 +24,30 @@ dict_p word_counting(int argc, char* argv[])
     //dict used by the process to calculate intermediate results
     dict_p proc_dict = dict_create();
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
-
+    //needed for gatherv
+    int displs[num_proc];
+    //buffer entries
+    char *buffer_entries;
     //buffers used to store sizes and entries of dicts
     int *global_buffer_dicts_sizes = calloc(num_proc, sizeof(int));
     int *global_buffer_dicts_entries = calloc(num_proc, sizeof(int));
 
-    DATA data[num_proc], proc_data = data_init(argc - 1);
+    files_info data[num_proc], proc_data = data_init(argc - 1);
     //init data structs
     for(int i = 0; i < num_proc; i++)
         data[i] = data_init(argc - 1);
     
-    //--------DATA CUSTOM TYPES--------//
+    //--------files_info CUSTOM TYPES--------//
     //type used for the list of file indexes
-    MPI_Datatype mpi_data_file_indexes;
-    MPI_Type_contiguous(argc - 1, MPI_INT, &mpi_data_file_indexes);
-    MPI_Type_commit(&mpi_data_file_indexes);
+    MPI_Datatype mpi_files_info_files_index;
+    MPI_Type_contiguous(argc - 1, MPI_INT, &mpi_files_info_files_index);
+    MPI_Type_commit(&mpi_files_info_files_index);
 
-    //type used to store
-    MPI_Datatype mpi_data_infos;
-    MPI_Type_contiguous(4, MPI_INT, &mpi_data_infos);
-    MPI_Type_commit(&mpi_data_infos);
+    //type used to store infos about data structs
+    MPI_Datatype mpi_files_info_infos;
+    MPI_Type_contiguous(4, MPI_INT, &mpi_files_info_infos);
+    MPI_Type_commit(&mpi_files_info_infos);
+    //---------------------------------//
 
     //--------TYPE_CREATE_STRUCT DICT_ENTRY--------//
     //we have to create a struct type, otherwise we should different copies and memory and pack everything
@@ -56,6 +66,7 @@ dict_p word_counting(int argc, char* argv[])
     MPI_Type_create_struct(dict_fields, dict_block_length, dict_offsets, dict_types, &mpi_dict_entry_struct_tmp);
     MPI_Type_create_resized(mpi_dict_entry_struct_tmp, 0, extent_dict, &mpi_dict_entry_struct);
     MPI_Type_commit(&mpi_dict_entry_struct);
+    //---------------------------------------------//
 
     //Master
     if(rank == 0){
@@ -220,12 +231,15 @@ dict_p word_counting(int argc, char* argv[])
         for(int i = 1; i < num_proc; i++){
             int data_infos[] = {data[i].size, data[i].start, data[i].end, data[i].num_files};
 
-            MPI_Send(data_infos, 1, mpi_data_infos, i, 1, MPI_COMM_WORLD);
-            MPI_Send(&data[i].files[0], 1, mpi_data_file_indexes, i, 1, MPI_COMM_WORLD);
+            MPI_Send(data_infos, 1, mpi_files_info_infos, i, 1, MPI_COMM_WORLD);
+            MPI_Send(&data[i].files[0], 1, mpi_files_info_files_index, i, 1, MPI_COMM_WORLD);
         }
-    
-        //master doing is piece of work
+
         proc_data = data[0];
+        word_counter(proc_data, proc_dict, argv);
+    }
+        //master doing is piece of work
+        /*proc_data = data[0];
 
         //data_print(proc_data);
 
@@ -253,17 +267,14 @@ dict_p word_counting(int argc, char* argv[])
         MPI_Gatherv(proc_dict->entry, proc_dict->num_entries, mpi_dict_entry_struct, global_dict->entry, 
                 global_buffer_dicts_entries, displs, mpi_dict_entry_struct, 0, MPI_COMM_WORLD);
             
-        global_dict = merge_dict(global_dict);
-
-        //MPI_Finalize();
-        //return global_dict;
-    } 
+        global_dict = merge_dict(global_dict);*/
+    //} 
     //Slaves
     else {
         int data_infos[4];
 
-        MPI_Recv(data_infos, 1, mpi_data_infos, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&proc_data.files[0], 1, mpi_data_file_indexes, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(data_infos, 1, mpi_files_info_infos, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&proc_data.files[0], 1, mpi_files_info_files_index, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         proc_data.size = data_infos[0];
         proc_data.start = data_infos[1];
@@ -275,27 +286,49 @@ dict_p word_counting(int argc, char* argv[])
         word_counter(proc_data, proc_dict, argv);
         //dict_print(proc_dict);
 
-        //--------SLAVES SEND DICT DATA TO MASTER--------//
-        MPI_Gather(&proc_dict->num_entries, 1, MPI_INT, global_buffer_dicts_entries, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        //--------SLAVES SEND DICT files_info TO MASTER--------//
+        /*MPI_Gather(&proc_dict->num_entries, 1, MPI_INT, global_buffer_dicts_entries, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Gather(&proc_dict->size, 1, MPI_INT, global_buffer_dicts_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Gatherv(proc_dict->entry, proc_dict->num_entries, mpi_dict_entry_struct, NULL, 
-                NULL, NULL, NULL, 0, MPI_COMM_WORLD);
+                NULL, NULL, NULL, 0, MPI_COMM_WORLD);*/
     }
 
-    //MPI_Finalize();
-    //exit(0);
+    //--------GATHER ALL DICTS--------//
+    MPI_Gather(&proc_dict->num_entries, 1, MPI_INT, global_buffer_dicts_entries, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&proc_dict->size, 1, MPI_INT, global_buffer_dicts_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    MPI_Type_free(&mpi_data_infos);
+    if(rank == 0){
+        //Update size and num entries of global dict, calculate displs to find the displacement
+        //relative to the global_dict entries of each process
+        displs[0] = 0;
+        for(int k = 0; k < num_proc; k++){
+            if(k > 0)
+                displs[k] = displs[k - 1] + global_buffer_dicts_entries[k - 1];
+            global_dict->size += global_buffer_dicts_sizes[k];
+            global_dict->num_entries += global_buffer_dicts_entries[k];
+        }
+        dict_increase_size(global_dict);
+    }
+    
+    MPI_Gatherv(proc_dict->entry, proc_dict->num_entries, mpi_dict_entry_struct, global_dict->entry, 
+                global_buffer_dicts_entries, displs, mpi_dict_entry_struct, 0, MPI_COMM_WORLD);
+
+    if(rank == 0){
+        global_dict = merge_dict(global_dict);
+        result = MPI_Wtime() - start;
+        printf("Time elapsed: %0.3f sec(s).\n", result);
+    }
+
+    MPI_Type_free(&mpi_files_info_infos);
     MPI_Type_free(&mpi_dict_entry_struct);
     MPI_Type_free(&mpi_dict_entry_struct_tmp);
-    MPI_Type_free(&mpi_data_file_indexes);
+    MPI_Type_free(&mpi_files_info_files_index);
     MPI_Finalize();
-    //free all the memory used to generate the global_dict
-    free(proc_dict);
+
+    dict_free(proc_dict);
     free(file_list_size);
     free(global_buffer_dicts_entries);
     free(global_buffer_dicts_sizes);
-    free(proc_data.files);
 
     if(rank == 0)
         return global_dict;

@@ -17,6 +17,7 @@ typedef struct {
 } dict_v, *dict_p;
 
 dict_p dict_create();
+void dict_free(dict_p dict);
 void dict_increase_size(dict_p dict);
 int dict_find_index(dict_p dict, const char *key);
 int dict_find(dict_p dict, const char *key);
