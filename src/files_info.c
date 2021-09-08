@@ -1,4 +1,4 @@
-#include "../headers/data.h"
+#include "../headers/files_info.h"
 
 //init files_info struct; size, start and end are initiliazed to 0 and file_indexes 
 //is going to hold "files" indexes.
