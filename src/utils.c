@@ -5,7 +5,7 @@
 //check if ch is a word terminator
 int is_word_terminator(int ch){
     if(ch == ' ' || ch == '\n' || ch == ':' || ch == '.' || ch == '\t' 
-        || ch == ';' || ch == ',' || ch == '\'' || ch == '/' || ch == EOF)
+        || ch == ';' || ch == ',' || ch == '\'' || ch == '/' || ch == '-' || ch == EOF)
         return 1;
     else return 0;
 }
