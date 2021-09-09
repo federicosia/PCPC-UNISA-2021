@@ -11,17 +11,17 @@ This software performs word counting in parallel, thanks to MPI, over a large nu
 
 ## Implementation
 
-Splitting the files between processes is bad choice because files could have different sizes, so the work won't be divided equally. A good solution is sharing the bytes of the list between processes, this way the workload will be the same. The master node will create a struct called ***files_info*** for each process, that has 5 parameters: 
+Splitting the files between processes is bad choice because files could have different sizes, so the work won't be divided equally. A good solution is sharing the bytes of the list between processes, this way the workload will be the same. The master node will create a struct called ```files_info``` for each process, that has 5 parameters: 
 
-1. **size**
+1. ```size```
     - How many bytes the process must analyze in the given file list.
-2. **start**
+2. ```start```
     - First byte to be analyzed in the first file. A file can be splitted between more processes, this prevent that the process analyze the same data more than a single time.
-3. **end**
+3. ```end```
     - Last byte to be analyzed in the last file. A file can also be partially analyzed by a process.
-4. **num_files**
+4. ```num_files```
     - Number of files present in the list of files sent by the master node.
-5. **files**
+5. ```files```
     - List of file's indexes
 
 To populate this structure this piece of code is used: 
@@ -58,14 +58,25 @@ while(supp_size > 0){
     }
 }
 ```
+The first if is used when the number of bytes that have to be analyzed by the process *i* is bigger than the file size with index *file_counter*, the size is decremented ```supp_size - file_list_size[file_counter]```, the index is stored in ```data[i].files```. If ```supp_size > 0``` we continue otherwise we stop, in the second case it means that we stored all the informations needed for the process *i* to start working. The case when the first if is not true means that ```supp_size < file_list_size[file_counter]```, so only a piece of this file will be analyzed, ```data[i].end``` will be equal to the remaining bytes to be analyzed ```supp_size```.
 
-Before starting, each process will create an additional structure called ***dict***, when a process finds a new word it will be stored in the dictionary, if the entry is already present than a counter is increased, otherwise a new entry will be created with the counter at 1. This structure is composed by the following parameters:
+When a process receives, from the **master**, the structure ```files_info``` it will create an additional structure called ```dict```. When a process finds a new word it will be stored in the dictionary, if the entry is already present than a counter is increased, otherwise a new entry will be created with the counter set to 1. This structure is composed by the following parameters:
 
-1. **num_entries**
+1. ```num_entries```
     - The number of entries stored in the dictionary.
-2. **size**
+2. ```size```
     - Entries that can be stored in the dictionary, if num_entries equals size than will be reallocated extra memory to allow more entries to be stored.
-3. **dict_entries**
+3. ```dict_entries```
     - List of entries, a entry is a structure that holds 2 parameters, a word and the occurrences of that word present in the file list.
 
-When a process has done its job it will send the dictionary to the master. When the master has received all the dictionaries it will sort and merge all the entries creating the **global histogram**.
+When a process has done its work it sends the dictionary (the **local histogram**) to the master. When the master receives all the dictionaries, it sorts and merges all the entries creating the **global histogram**, storing it in a file ```.csv```.
+
+The MPI features used are:
+- ```MPI_Gather```
+- ```MPI_Gatherv```
+- ```MPI_Send```
+- ```MPI_Recv```  
+
+To send the custom structures towards other processes 3 *derived type* were created using:
+- ```MPI_Type_contiguous```
+- ```MPI_Type_create_struct```
