@@ -238,37 +238,6 @@ dict_p word_counting(int argc, char* argv[])
         proc_data = data[0];
         word_counter(proc_data, proc_dict, argv);
     }
-        //master doing is piece of work
-        /*proc_data = data[0];
-
-        //data_print(proc_data);
-
-        word_counter(proc_data, proc_dict, argv);//, file_counter);
-        //dict_print(proc_dict);
-    
-        //--------GATHER ALL DICTS--------//
-        MPI_Gather(&proc_dict->num_entries, 1, MPI_INT, global_buffer_dicts_entries, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Gather(&proc_dict->size, 1, MPI_INT, global_buffer_dicts_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        
-        //Update size and num entries of global dict, calculate displs to find the displacement ->
-        //-> relative to the global_dict entries of each process
-        int displs[num_proc];
-        displs[0] = 0;
-        for(int k = 0; k < num_proc; k++){
-            if(k > 0)
-                displs[k] = displs[k - 1] + global_buffer_dicts_entries[k - 1];
-            global_dict->size += global_buffer_dicts_sizes[k];
-            global_dict->num_entries += global_buffer_dicts_entries[k];
-        }
-
-        //Allocate the needed memory to hold all the entries
-        dict_increase_size(global_dict);
-
-        MPI_Gatherv(proc_dict->entry, proc_dict->num_entries, mpi_dict_entry_struct, global_dict->entry, 
-                global_buffer_dicts_entries, displs, mpi_dict_entry_struct, 0, MPI_COMM_WORLD);
-            
-        global_dict = merge_dict(global_dict);*/
-    //} 
     //Slaves
     else {
         int data_infos[4];
@@ -285,12 +254,6 @@ dict_p word_counting(int argc, char* argv[])
 
         word_counter(proc_data, proc_dict, argv);
         //dict_print(proc_dict);
-
-        //--------SLAVES SEND DICT files_info TO MASTER--------//
-        /*MPI_Gather(&proc_dict->num_entries, 1, MPI_INT, global_buffer_dicts_entries, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Gather(&proc_dict->size, 1, MPI_INT, global_buffer_dicts_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(proc_dict->entry, proc_dict->num_entries, mpi_dict_entry_struct, NULL, 
-                NULL, NULL, NULL, 0, MPI_COMM_WORLD);*/
     }
 
     //--------GATHER ALL DICTS--------//
