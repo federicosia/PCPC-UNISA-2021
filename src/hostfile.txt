@@ -1,4 +1,4 @@
-#54.208.78.241 slots=8 max-slots=8
+54.208.78.241 slots=8 max-slots=8
 54.175.64.207 slots=8 max-slots=8
 3.87.205.199 slots=8 max-slots=8
 3.86.93.81 slots=8 max-slots=8
