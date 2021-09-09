@@ -154,13 +154,21 @@ dict_p merge_dict(dict_p global_dict){
 */
 void print_csv(dict_p dict){
     FILE *file;
-    char path[] = "../results/result.csv";
-    
-    file = fopen(path, "w");
+    char *store_path = "../results/";
+    char *filename = malloc(25);
+    char *fullpath = calloc(strlen(store_path) + strlen(filename) + 1, 1);
+
+    printf("Write the name of the file, no more than 20 characters.\n");
+    scanf("%20[^\n]", filename);
+    strcat(filename, ".csv");
+    strcat(fullpath, store_path);
+    strcat(fullpath, filename);
+
+    file = fopen(fullpath, "w");
     fprintf(file, "Name, Occurrences\n");
     for(int i = 0; i < dict->num_entries; i++){
         fprintf(file, "%s, %d\n", dict->entry[i].name, dict->entry[i].occurrences);
     }
     fclose(file);
-    printf("\nFile %s created\n", "result.csv");
+    printf("\nFile created: %s\n", filename);
 }
