@@ -24,9 +24,9 @@ Splitting the files between processes is bad choice because files could have dif
 5. ```files```
     - List of file's indexes
 
-To populate this structure this piece of code is used: 
+To populate the structure this piece of code is used: 
 
-```
+```C
 while(supp_size > 0){
     if(supp_size > file_list_size[file_counter]){
         supp_size -= file_list_size[file_counter];
@@ -71,12 +71,20 @@ When a process receives, from the **master**, the structure ```files_info``` it 
 
 When a process has done its work it sends the dictionary (the **local histogram**) to the master. When the master receives all the dictionaries, it sorts and merges all the entries creating the **global histogram**, storing it in a file ```.csv```.
 
-The MPI features used are:
+The file ```word_counter.c``` is the core of the project, here are used some MPI features :
+
 - ```MPI_Gather```
 - ```MPI_Gatherv```
 - ```MPI_Send```
 - ```MPI_Recv```  
 
-To send the custom structures towards other processes 3 *derived type* were created using:
+To send the custom structures towards other processes 3 *derived type*s were created using:
+
 - ```MPI_Type_contiguous```
 - ```MPI_Type_create_struct```
+
+## Execution instructions
+
+To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that are to be analyzed should be stored in the ```texts``` directory.
+
+## Benchmarks
