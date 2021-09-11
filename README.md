@@ -98,18 +98,32 @@ To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main
 Where **t(1)** is the computational time for the software running with one processor, and **t(N)** is the computational time running the same software with N processors.  
 The *scalability testing* consists in two type of testing, **weak** and **strong** scalability. 
 
+The cluster used for the benchmarks is an **Amazon AWS EC2** cluster composed by 4 instances of t2.2xlarge  (8 core processor). 
+
 ### Strong scaling
 
 The size of the problem remains constant, but the number of processors is increased, this will translate in reduced workload per processor. This test was made using 96 files **prova.txt**, each file is 40 kB of text, for a total of 4 mB.
 
 This chart shows how the time needed to resolve this problem changes with the increase of processors used in the computation.
 
-<p align="center">
-    <img src="images/strong_scalability.png">
-</p>
+![time elapsed strong scaling](images/strong_scalability.png)
 
-This one shows like the speedup varies with the increase of processors involved in the computation. (The red line shows the ideal speedup, the blue line shows the actual speed obtained)
+This one shows like the speedup varies with the increase of processors involved in the computation. (The red line shows the ideal speedup, the blue line shows the actual speedup)
 
-<p align="center">
-    <img src="speedup">
-</p>
+![speedup strong scaling](images/speedup.png)
+
+From the strong scalability tests we can conclude the best results are obtained with 18 processors. After that, the speedup starts declining. The decline can be attributed by the latency and limited bandwidth, the parallel part of the code isn't optimized correctly or the serial part of the code is acting as bottle neck. The first update that could be made, to improve the serial part, is improving the sorting and merging part. 
+
+### Weak Scalability
+
+Both number of processors and the problem size are increased. This results in a costant workload per processor. This test was made using 3 files **prova.txt** per processor, each file is 40 kB, for a total of 120 kB per processor.
+
+This chart shows how the time needed to resolve this problem changes with the increase of processors and problem size.
+
+![time elapsed weak scaling](images/weak_scalability.png)
+
+This chart shows the efficiency with the increase of the processors.
+
+![efficiency weak scaling](images/efficiency.png)
+
+The ideal efficiency would stay 1, so using only a processor, but with the increase of processors the efficiency start declaining because more data needs to be communicated between nodes, also another factor is the bandwidth of the communication network.
