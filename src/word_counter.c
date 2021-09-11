@@ -28,8 +28,7 @@ dict_p word_counting(int argc, char* argv[])
     int displs[num_proc];
     //buffer entries
     char *buffer_entries;
-    //buffers used to store sizes and entries of dicts
-    int *global_buffer_dicts_sizes = calloc(num_proc, sizeof(int));
+    //buffers used to store entries of dicts
     int *global_buffer_dicts_entries = calloc(num_proc, sizeof(int));
 
     files_info data[num_proc], proc_data = data_init(argc - 1);
@@ -255,10 +254,8 @@ dict_p word_counting(int argc, char* argv[])
         word_counter(proc_data, proc_dict, argv);
         //dict_print(proc_dict);
     }
-
     //--------GATHER ALL DICTS--------//
     MPI_Gather(&proc_dict->num_entries, 1, MPI_INT, global_buffer_dicts_entries, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&proc_dict->size, 1, MPI_INT, global_buffer_dicts_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if(rank == 0){
         //Update size and num entries of global dict, calculate displs to find the displacement
@@ -267,9 +264,9 @@ dict_p word_counting(int argc, char* argv[])
         for(int k = 0; k < num_proc; k++){
             if(k > 0)
                 displs[k] = displs[k - 1] + global_buffer_dicts_entries[k - 1];
-            global_dict->size += global_buffer_dicts_sizes[k];
             global_dict->num_entries += global_buffer_dicts_entries[k];
         }
+        global_dict->size = global_dict->num_entries + 10;
         dict_increase_size(global_dict);
     }
     
@@ -291,7 +288,6 @@ dict_p word_counting(int argc, char* argv[])
     dict_free(proc_dict);
     free(file_list_size);
     free(global_buffer_dicts_entries);
-    free(global_buffer_dicts_sizes);
 
     if(rank == 0)
         return global_dict;

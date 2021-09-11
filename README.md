@@ -85,6 +85,31 @@ To send the custom structures towards other processes 3 *derived type*s were cre
 
 ## Execution instructions
 
-To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that are to be analyzed should be stored in the ```texts``` directory.
+To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that are to be analyzed should be stored in the *texts* directory.
 
 ## Benchmarks
+
+**Scalability** is defined as the ability to handle more work as the size of the computer or application grows. For software, **scalability** is referred to as parallelization efficiency, namely the actual *speedup* we obtain when using a certain number of processors. The speedup is defined as:
+
+<p align="center">
+    <img src ="https://wikimedia.org/api/rest_v1/media/math/render/svg/0b44fa6048f6d42f47aa7c5b3ddc981b95507b86">
+</p>
+
+Where **t(1)** is the computational time for the software running with one processor, and **t(N)** is the computational time running the same software with N processors.  
+The *scalability testing* consists in two type of testing, **weak** and **strong** scalability. 
+
+### Strong scaling
+
+The size of the problem remains constant, but the number of processors is increased, this will translate in reduced workload per processor. This test was made using 96 files **prova.txt**, each file is 40 kB of text, for a total of 4 mB.
+
+This chart shows how the time needed to resolve this problem changes with the increase of processors used in the computation.
+
+<p align="center">
+    <img src="images/strong_scalability.png">
+</p>
+
+This one shows like the speedup varies with the increase of processors involved in the computation. (The red line shows the ideal speedup, the blue line shows the actual speed obtained)
+
+<p align="center">
+    <img src="speedup">
+</p>
