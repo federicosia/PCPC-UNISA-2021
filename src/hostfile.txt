@@ -1,4 +1,0 @@
-18.208.161.66 slots=8 max-slots=8
-54.196.164.20 slots=8 max-slots=8
-54.227.13.66 slots=8 max-slots=8
-54.173.119.57 slots=8 max-slots=8

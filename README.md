@@ -85,7 +85,7 @@ To send the custom structures towards other processes 3 *derived type*s were cre
 
 ## Execution instructions
 
-To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that are to be analyzed should be stored in the *texts* directory.
+To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that are to be analyzed should be stored in the *texts* directory. To run the code on the cluster add ```-hostfile <hostfile.txt>```, the public IPs of the nodes must be written in the text file.
 
 ## Benchmarks
 
