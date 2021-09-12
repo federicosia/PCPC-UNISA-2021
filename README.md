@@ -58,7 +58,7 @@ To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main
 **Scalability** is defined as the ability to handle more work as the size of the computer or application grows. For software, **scalability** is referred to as parallelization efficiency, namely the actual *speedup* we obtain when using a certain number of processors. The speedup is defined as:
 
 <p align="center">
-    <img src ="https://wikimedia.org/api/rest_v1/media/math/render/svg/0b44fa6048f6d42f47aa7c5b3ddc981b95507b86">
+    <img src ="images/speedup_equation.jpg">
 </p>
 
 Where **t(1)** is the computational time for the software running with one processor, and **t(N)** is the computational time running the same software with N processors.  
