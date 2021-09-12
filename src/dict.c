@@ -1,4 +1,4 @@
-#include "../headers/dict.h"
+#include "../include/dict.h"
 
 dict_p dict_create(){
     //dict_v supp_dict = {0, 10, malloc(10 * sizeof(dict_entry))};

@@ -3,7 +3,7 @@
 
 This software performs word counting in parallel, thanks to MPI, over a large number of files.
 
-- The **master** node (in this case the process with rank 0) reads the file list and distributes the files to all words. Once a process has received its list of files, it starts to processes it counting all the words, keeping track of the frequency of each word found. The structure holding the words and frequencies is called *local histogram*.
+- The **master** node (in this case the process with rank 0) reads the file list and distributes the files to all processes. Once a process has received its list of files, it starts to analyze it counting all the words, keeping track of the frequency of each word found. The structure holding the words and frequencies is called *local histogram*.
 
 - In the second phase each process sends the local histogram to the master node.
 
@@ -11,65 +11,29 @@ This software performs word counting in parallel, thanks to MPI, over a large nu
 
 ## Implementation
 
-Splitting the files between processes is bad choice because files could have different sizes, so the work won't be divided equally. A good solution is sharing the bytes of the list between processes, this way the workload will be the same. The master node will create a struct called ```files_info``` for each process, that has 5 parameters: 
+Splitting the files between processes is bad choice because files could have different sizes, so the work won't be divided equally. A good solution is dividing the list bytes between processes, this way the workload will be the same. The master node will create a struct called ```files_info``` for each process, that has 5 parameters: 
 
 1. ```size```
     - How many bytes the process must analyze in the given file list.
 2. ```start```
-    - First byte to be analyzed in the first file. A file can be splitted between more processes, this prevent that the process analyze the same data more than a single time.
+    - First byte to be analyzed in the first file of the given list. A file can be splitted between more processes, this prevent that a process analyze the same bytes more than a single time.
 3. ```end```
     - Last byte to be analyzed in the last file. A file can also be partially analyzed by a process.
 4. ```num_files```
     - Number of files present in the list of files sent by the master node.
 5. ```files```
-    - List of file's indexes
+    - List of file's indexes.
 
-To populate the structure this piece of code is used: 
-
-```C
-while(supp_size > 0){
-    if(supp_size > file_list_size[file_counter]){
-        supp_size -= file_list_size[file_counter];
-        //this if is needed if the process must analyze only a whole document, otherwise overflow.
-        if(supp_size == 0)  
-            data[i].end = file_list_size[file_counter];
-
-        file_list_size[file_counter] = 0;
-        
-        if(argc - 1 > file_counter){
-            file_counter++;
-            if(supp_size > 0){
-                index++;
-                data[i].files[index].index = file_counter + 1;
-            }
-        }
-    } else {
-        //here means that the process scans this last file, so we save the last bytes to be analyzed
-        file_list_size[file_counter] -= supp_size;
-        if(index == 0)
-            data[i].end = data[i].start + supp_size;
-        else 
-            data[i].end = supp_size;
-
-        if(file_list_size[file_counter] == 0)
-            file_counter++;
-
-        supp_size = 0;
-    }
-}
-```
-The first if is used when the number of bytes that have to be analyzed by the process *i* is bigger than the file size with index *file_counter*, the size is decremented ```supp_size - file_list_size[file_counter]```, the index is stored in ```data[i].files```. If ```supp_size > 0``` we continue otherwise we stop, in the second case it means that we stored all the informations needed for the process *i* to start working. The case when the first if is not true means that ```supp_size < file_list_size[file_counter]```, so only a piece of this file will be analyzed, ```data[i].end``` will be equal to the remaining bytes to be analyzed ```supp_size```.
-
-When a process receives, from the **master**, the structure ```files_info``` it will create an additional structure called ```dict```. When a process finds a new word it will be stored in the dictionary, if the entry is already present than a counter is increased, otherwise a new entry will be created with the counter set to 1. This structure is composed by the following parameters:
+When a process receives, from the **master**, the structure ```files_info``` it will create a dictionary structure called ```dict``` (aka **local histogram**). When a process finds a new word it will be stored in the dictionary, if the entry is already present than a counter is increased, otherwise a new entry will be created with the counter set to 1. This structure is composed by the following parameters:
 
 1. ```num_entries```
     - The number of entries stored in the dictionary.
 2. ```size```
     - Entries that can be stored in the dictionary, if num_entries equals size than will be reallocated extra memory to allow more entries to be stored.
 3. ```dict_entries```
-    - List of entries, a entry is a structure that holds 2 parameters, a word and the occurrences of that word present in the file list.
+    - List of entries, a entry is a structure that holds 2 parameters, a word and the occurrences of that word present in the file's list.
 
-When a process has done its work it sends the dictionary (the **local histogram**) to the master. When the master receives all the dictionaries, it sorts and merges all the entries creating the **global histogram**, storing it in a file ```.csv```.
+When a process has done its work it sends the dictionary (the **local histogram**) to the master. When the master receives all the dictionaries, it sorts and merges all the entries creating the **global histogram**, storing it in a file ```.csv``` (the name of the ```.csv``` will be asked to the user before creating the file).
 
 The file ```word_counter.c``` is the core of the project, here are used some MPI features :
 
@@ -83,9 +47,11 @@ To send the custom structures towards other processes 3 *derived type*s were cre
 - ```MPI_Type_contiguous```
 - ```MPI_Type_create_struct```
 
+also from the line 111 to 227 there's the code to generate the ```files_info``` structures. Before sending the structure an extra check is done, the last byte saved in the ```end``` parameter will be used to check if some padding is needed (the ```end``` byte could be a letter in the middle of a word, if we don't do any padding the word will be split between 2 or more processes!). 
+
 ## Execution instructions
 
-To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that are to be analyzed should be stored in the *texts* directory. To run the code on the cluster add ```-hostfile <hostfile.txt>```, the public IPs of the nodes must be written in the text file.
+To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main.c``` and to run it use ```mpirun -np <number_processes> <name_executable> <filename1, filename2, filename3, ...>```. Note that when using ```mpirun``` the program will ask for the name of the ```.csv``` file (max 20 characters, extra characters will be discarded) where the **global histogram** is going to be stored, the resulting file will be stored in the *result* directory. The files that need to be analyzed should be stored in the *texts* directory. To run the code on the cluster add ```-hostfile <hostfile>```, the public IPs of the nodes must be written in the file.
 
 ## Benchmarks
 
@@ -98,21 +64,21 @@ To compile the code use ```mpicc dict.c files_info.c utils.c word_counter.c main
 Where **t(1)** is the computational time for the software running with one processor, and **t(N)** is the computational time running the same software with N processors.  
 The *scalability testing* consists in two type of testing, **weak** and **strong** scalability. 
 
-The cluster used for the benchmarks is an **Amazon AWS EC2** cluster composed by 4 instances of t2.2xlarge  (8 core processor). 
+The cluster used for the benchmarks is an **Amazon AWS EC2** cluster composed by 4 instances of t2.2xlarge  (8 core processor each). 
 
 ### Strong scaling
 
 The size of the problem remains constant, but the number of processors is increased, this will translate in reduced workload per processor. This test was made using 96 files **prova.txt**, each file is 40 kB of text, for a total of 4 mB.
 
-This chart shows how the time needed to resolve this problem changes with the increase of processors used in the computation.
+This chart shows how long it takes to resolve the problem as the number of processors used in the computation increases.
 
 ![time elapsed strong scaling](images/strong_scalability.png)
 
-This one shows like the speedup varies with the increase of processors involved in the computation. (The red line shows the ideal speedup, the blue line shows the actual speedup)
+This chart shows the speedup varies as the number of the processors involved in the computation increases. (The red line shows the ideal speedup, the blue line shows the actual speedup)
 
 ![speedup strong scaling](images/speedup.png)
 
-From the strong scalability tests we can conclude the best results are obtained with 18 processors. After that, the speedup starts declining. The decline can be attributed by the latency and limited bandwidth, the parallel part of the code isn't optimized correctly or the serial part of the code is acting as bottle neck. The first update that could be made, to improve the serial part, is improving the sorting and merging part. 
+From the strong scalability tests we can conclude the best results are obtained with 18 processors. After that, the speedup starts declining. The decline can be attributed by the latency and limited bandwidth, the parallel part of the code isn't optimized correctly or the serial part of the code is acting as bottle neck. The first update that could be made, to improve the serial part, could be improving the sorting and merging part. 
 
 ### Weak Scalability
 
@@ -126,4 +92,4 @@ This chart shows the efficiency with the increase of the processors.
 
 ![efficiency weak scaling](images/efficiency.png)
 
-The ideal efficiency would stay 1, so using only a processor, but with the increase of processors the efficiency start declaining because more data needs to be communicated between nodes, also another factor is the bandwidth of the communication network.
+The ideal efficiency would remain 1, so using only a processor, but with the increase of processors the efficiency start to decline because more data needs to be communicated between nodes, plus another factor is the bandwidth of the communication network, latency and MPI overhead.

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../headers/utils.h"
-#include "../headers/dict.h"
+#include "../include/utils.h"
+#include "../include/dict.h"
 
 typedef struct{
     int index;

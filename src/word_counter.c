@@ -1,4 +1,4 @@
-#include "../headers/word_counter.h"
+#include "../include/word_counter.h"
 
 dict_p word_counting(int argc, char* argv[])
 {

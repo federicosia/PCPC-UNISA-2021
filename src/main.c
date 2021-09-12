@@ -1,5 +1,4 @@
-#include <time.h>
-#include "../headers/word_counter.h"
+#include "../include/word_counter.h"
 
 int main(int argc, char* argv[])
 {   
