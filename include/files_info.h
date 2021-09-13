@@ -15,6 +15,6 @@ typedef struct{
     file *files;
 } files_info;
 
-files_info data_init(int files);
+files_info files_info_init(int files);
 void word_counter(files_info data, dict_p dict, char* argv[]);//, int file_counter);
-char* data_print(files_info data);
+char* files_info_print(int rank, files_info data);

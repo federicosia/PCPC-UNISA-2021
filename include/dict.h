@@ -22,6 +22,6 @@ void dict_increase_size(dict_p dict);
 int dict_find_index(dict_p dict, const char *key);
 int dict_find(dict_p dict, const char *key);
 void dict_add(dict_p dict, const char *key);
-void dict_print(dict_p dict);
+void dict_print(int rank, dict_p dict);
 dict_p merge_dict(dict_p global_dict);
 void print_csv(dict_p dict);

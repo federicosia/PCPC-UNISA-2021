@@ -3,7 +3,7 @@
 //init files_info struct; size, start and end are initiliazed to 0 and file_indexes 
 //is going to hold "files" indexes.
 // - init files: how many files files_info should hold
-files_info data_init(int files){
+files_info files_info_init(int files){
     files_info data = {0, 0, 0, 0, calloc(files, sizeof(int))};
 
     return data;
@@ -72,8 +72,8 @@ void word_counter(files_info data, dict_p dict, char* argv[]){//, int file_count
     }
 }
 
-char* data_print(files_info data){
-    printf("\tStart: %d\n\tend: %d\n\tsize: %d\n\t", data.start, data.end, data.size);
+char* files_info_print(int rank, files_info data){
+    printf("Process: %d\n\tStart: %d\n\tend: %d\n\tsize: %d\n\t", rank, data.start, data.end, data.size);
     printf("file indexes: ");
     for(int j = 0; j < data.num_files; j++){
         printf("%d ", data.files[j].index);

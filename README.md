@@ -11,7 +11,7 @@ This software performs word counting in parallel, thanks to MPI, over a large nu
 
 ## Implementation
 
-Splitting the files between processes is bad choice because files could have different sizes, so the work won't be divided equally. A good solution is dividing the list bytes between processes, this way the workload will be the same. The master node will create a struct called ```files_info``` for each process, that has 5 parameters: 
+Splitting the files between processes is bad choice because files could have different sizes, so the work won't be divided equally. A good solution is dividing the list bytes between processes, this way the workload will be the same. The master node will create a structure called ```files_info``` for each process, that has 5 parameters: 
 
 1. ```size```
     - How many bytes the process must analyze in the given file list.

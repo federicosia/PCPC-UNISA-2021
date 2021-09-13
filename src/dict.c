@@ -55,7 +55,8 @@ void dict_add(dict_p dict, const char *key){
 }
 
 //print dict components
-void dict_print(dict_p dict){
+void dict_print(int rank, dict_p dict){
+    printf("Process: %d\n", rank);
     for(int i = 0; i < dict->num_entries; i++){
         printf("\t%s - %d\n", dict->entry[i].name, dict->entry[i].occurrences);    
     }
